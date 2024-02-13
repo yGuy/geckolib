@@ -128,7 +128,8 @@ class GeckoUdpProtocolHandler(ABC):
         use is for inline async stuff"""
         assert self._timeout_in_seconds > 0
         while True:
-            value = await protocol.queue.async_peek()
+            await protocol.queue.data_available()
+            value = protocol.queue.head
             if value is not None:
                 data, sender = value
                 if self.can_handle(data, sender):
@@ -148,7 +149,8 @@ class GeckoUdpProtocolHandler(ABC):
 
         assert self._timeout_in_seconds == 0
         while True:
-            value = await protocol.queue.async_peek()
+            await protocol.queue.data_available()
+            value = protocol.queue.head
             if value is not None:
                 data, sender = value
                 if self.can_handle(data, sender):

@@ -9,14 +9,14 @@ class AsyncPeekableQueue:
 
     def __init__(self):
         self._queue = asyncio.Queue()
-        self._peek_future = None
+        self._wait_future = None
         self._marked = False
 
     def put_nowait(self, item):
-        if self._peek_future is not None:
-            self._peek_future.set_result(item)
-            self._peek_future = None
         self._queue.put_nowait(item)
+        if self._wait_future is not None:
+            self._wait_future.set_result(True)
+            self._wait_future = None
 
     @property
     def head(self) -> Any:
@@ -26,13 +26,13 @@ class AsyncPeekableQueue:
             return self._queue._queue[0]  # type: ignore
         return None
 
-    async def async_peek(self):
+    async def data_available(self):
         if self._queue.qsize() < 1:
-            if self._peek_future is None:
-                self._peek_future = self._queue._get_loop().create_future()
-            return await self._peek_future
+            if self._wait_future is None:
+                self._wait_future = self._queue._get_loop().create_future()
+            return await self._wait_future
         else:
-            return self._queue._queue[0]  # Direct access to internal queue here, as asyncio.Queue does not have a peek operation
+            return True
 
     @property
     def is_marked(self) -> bool:

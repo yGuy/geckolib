@@ -24,8 +24,8 @@ class GeckoUnhandledProtocolHandler(GeckoUdpProtocolHandler):
 
     async def consume(self, protocol):
         while True:
-            value = await protocol.queue.async_peek()
-            if value is not None:
+            await protocol.queue.data_available()
+            if protocol.queue.head is not None:
                 # First time we see this, we mark the queue
                 protocol.queue.mark()
                 # Allow the rest of the tasks to operate
