@@ -128,11 +128,12 @@ class GeckoUdpProtocolHandler(ABC):
         use is for inline async stuff"""
         assert self._timeout_in_seconds > 0
         while True:
-            try:
-                await asyncio.wait_for(protocol.queue.data_available(), timeout=10)
+            task = asyncio.create_task(protocol.queue.data_available())
+            done, pending = await asyncio.wait({task}, timeout=10)
+
+            if task in done:
                 value = protocol.queue.head
-            except asyncio.TimeoutError:
-                _LOGGER.debug("Awaiting available data timed out.")
+            else:
                 value = None
 
             if value is not None:
@@ -154,11 +155,12 @@ class GeckoUdpProtocolHandler(ABC):
 
         assert self._timeout_in_seconds == 0
         while True:
-            try:
-                await asyncio.wait_for(protocol.queue.data_available(), timeout=0.5)
+            task = asyncio.create_task(protocol.queue.data_available())
+            done, pending = await asyncio.wait({task}, timeout=2)
+
+            if task in done:
                 value = protocol.queue.head
-            except asyncio.TimeoutError:
-                _LOGGER.debug("Awaiting available data to consume timed out.")
+            else:
                 value = None
 
             if value is not None:
